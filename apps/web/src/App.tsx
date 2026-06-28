@@ -113,6 +113,7 @@ export const App = () => {
     | "create-tentacles"
     | null
   >(null);
+  const [deckEmptyViewMode, setDeckEmptyViewMode] = useState<"idle" | "adding">("idle");
 
   const readColumns = useCallback(
     async (signal?: AbortSignal) => {
@@ -465,13 +466,15 @@ export const App = () => {
           <PrimaryViewRouter
             activePrimaryNav={activePrimaryNav}
             deckPrimaryViewProps={{
-              onSidebarContent: setDeckSidebarContent,
-              workspaceSetup,
-              isWorkspaceSetupLoading,
-              workspaceSetupError,
-              onRefreshWorkspaceSetup: refreshWorkspaceSetup,
-              onRunWorkspaceSetupStep: runWorkspaceSetupStep,
-              suppressWorkspaceSetupCard: true,
+               onSidebarContent: setDeckSidebarContent,
+               workspaceSetup,
+               isWorkspaceSetupLoading,
+               workspaceSetupError,
+               onRefreshWorkspaceSetup: refreshWorkspaceSetup,
+               onRunWorkspaceSetupStep: runWorkspaceSetupStep,
+               suppressWorkspaceSetupCard: true,
+               emptyViewMode: deckEmptyViewMode,
+               onEmptyViewModeChange: setDeckEmptyViewMode,
             }}
             isMonitorVisible={isMonitorVisible}
             activityPrimaryViewProps={{
@@ -555,14 +558,9 @@ export const App = () => {
               onCreateWorktreeTerminal: async () => {
                 return await createTerminal("worktree", undefined, OCTOBOSS_ID);
               },
-              onCreateTentacle: async () => {
-                const response = await fetch("/api/deck/tentacles", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ name: "", description: "" }),
-                });
-                if (!response.ok) return;
-                await refreshColumns();
+              onCreateTentacle: () => {
+                setDeckEmptyViewMode("adding");
+                setActivePrimaryNav(2);
               },
               onSpawnSwarm: async (tentacleId, workspaceMode) => {
                 const response = await fetch(

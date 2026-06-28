@@ -59,6 +59,8 @@ type DeckPrimaryViewProps = {
   onRefreshWorkspaceSetup: () => Promise<WorkspaceSetupSnapshot | null>;
   onRunWorkspaceSetupStep: (stepId: WorkspaceSetupStepId) => Promise<WorkspaceSetupSnapshot | null>;
   suppressWorkspaceSetupCard?: boolean;
+  emptyViewMode?: EmptyViewMode;
+  onEmptyViewModeChange?: (mode: EmptyViewMode) => void;
 };
 
 export const DeckPrimaryView = ({
@@ -69,12 +71,33 @@ export const DeckPrimaryView = ({
   onRefreshWorkspaceSetup,
   onRunWorkspaceSetupStep,
   suppressWorkspaceSetupCard = false,
+  emptyViewMode: emptyViewModeProp,
+  onEmptyViewModeChange,
 }: DeckPrimaryViewProps) => {
   const [tentacles, setTentacles] = useState<DeckTentacleSummary[]>([]);
   const [focus, setFocus] = useState<FocusState | null>(null);
   const [vaultContent, setVaultContent] = useState<string | null>(null);
   const [loadingVault, setLoadingVault] = useState(false);
-  const [emptyViewMode, setEmptyViewMode] = useState<EmptyViewMode>("idle");
+  const [localEmptyViewMode, setLocalEmptyViewMode] = useState<EmptyViewMode>("idle");
+
+  const emptyViewMode = emptyViewModeProp ?? localEmptyViewMode;
+  const setEmptyViewMode = useCallback((mode: EmptyViewMode) => {
+    setLocalEmptyViewMode(mode);
+    onEmptyViewModeChange?.(mode);
+  }, [onEmptyViewModeChange]);
+
+  useEffect(() => {
+    if (emptyViewMode === "adding") {
+      setFocus(null);
+    }
+  }, [emptyViewMode]);
+
+  useEffect(() => {
+    if (focus !== null) {
+      setEmptyViewMode("idle");
+    }
+  }, [focus, setEmptyViewMode]);
+
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [availableSkills, setAvailableSkills] = useState<DeckAvailableSkill[]>([]);
@@ -345,7 +368,7 @@ export const DeckPrimaryView = ({
     focus?.type === "vault" || focus?.type === "vault-browser"
       ? tentacles.find((t) => t.tentacleId === focus.tentacleId)
       : null;
-  const mode = focus ? "detail" : "grid";
+  const mode = (focus || emptyViewMode === "adding") ? "detail" : "grid";
   const shouldShowWorkspaceSetup =
     !suppressWorkspaceSetupCard && tentacles.length === 0 && workspaceSetup?.shouldShowSetupCard;
 
@@ -525,6 +548,15 @@ export const DeckPrimaryView = ({
       </div>
 
       <div className="deck-detail-main">
+        {emptyViewMode === "adding" && (
+          <AddTentacleForm
+            onSubmit={handleCreateTentacle}
+            onCancel={() => setEmptyViewMode("idle")}
+            isSubmitting={isCreating}
+            error={createError}
+            availableSkills={availableSkills}
+          />
+        )}
         {focus?.type === "vault-browser" && focusedTentacle && (
           <>
             <header className="deck-detail-main-header">
