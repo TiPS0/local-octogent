@@ -12,6 +12,7 @@ import {
   readDeckVaultFile,
   toggleTodoItem,
   updateDeckTentacleSuggestedSkills,
+  writeVaultFile,
 } from "../deck/readDeckTentacles";
 import { resolvePrompt } from "../prompts";
 import { MAX_CHILDREN_PER_PARENT, RuntimeInputError } from "../terminalRuntime";
@@ -173,21 +174,42 @@ export const handleDeckVaultFileRoute: ApiRouteHandler = async (
 ) => {
   const match = requestUrl.pathname.match(DECK_VAULT_FILE_PATTERN);
   if (!match) return false;
-  if (request.method !== "GET") {
-    writeMethodNotAllowed(response, corsOrigin);
-    return true;
-  }
 
   const tentacleId = decodeURIComponent(match[1] as string);
   const fileName = decodeURIComponent(match[2] as string);
 
-  const content = readDeckVaultFile(workspaceCwd, tentacleId, fileName);
-  if (content === null) {
-    writeJson(response, 404, { error: "Vault file not found" }, corsOrigin);
+  if (request.method === "GET") {
+    const content = readDeckVaultFile(workspaceCwd, tentacleId, fileName);
+    if (content === null) {
+      writeJson(response, 404, { error: "Vault file not found" }, corsOrigin);
+      return true;
+    }
+    writeText(response, 200, content, "text/markdown; charset=utf-8", corsOrigin);
     return true;
   }
 
-  writeText(response, 200, content, "text/markdown; charset=utf-8", corsOrigin);
+  if (request.method === "POST" || request.method === "PUT") {
+    const bodyReadResult = await readJsonBodyOrWriteError(request, response, corsOrigin);
+    if (!bodyReadResult.ok) return true;
+
+    const body = bodyReadResult.payload as Record<string, unknown> | null;
+    const content = body && typeof body.content === "string" ? body.content : null;
+    if (content === null) {
+      writeJson(response, 400, { error: "content (string) is required" }, corsOrigin);
+      return true;
+    }
+
+    const result = writeVaultFile(workspaceCwd, tentacleId, fileName, content);
+    if (!result.ok) {
+      writeJson(response, 400, { error: result.error }, corsOrigin);
+      return true;
+    }
+
+    writeJson(response, 200, { tentacleId, fileName, saved: true }, corsOrigin);
+    return true;
+  }
+
+  writeMethodNotAllowed(response, corsOrigin);
   return true;
 };
 

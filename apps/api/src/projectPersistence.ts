@@ -255,6 +255,53 @@ export const resolveProjectStateDir = (workspaceCwd: string, preferredName?: str
   return projectDir;
 };
 
+const OCTOBOSS_CONTEXT_MD = `# Octoboss
+
+The meta-agent planner. Analyzes project context and coordinates tentacles to execute tasks.
+
+## Role
+
+Octoboss is the orchestrator: it reads briefings, decomposes goals into todo items, assigns them to the right tentacles, and monitors swarm progress. It does not implement code directly — it delegates.
+
+## Working with Octoboss
+
+- Add a briefing in \`BRIEFING.md\` describing the task or goal.
+- Add a prompt in \`PROMPT.md\` to give Octoboss a specific instruction.
+- Octoboss will read these files and produce a plan in \`todo.md\`.
+`;
+
+const OCTOBOSS_TODO_MD = `# Todo
+`;
+
+const OCTOBOSS_BRIEFING_MD = `# Briefing
+
+<!-- Add project context, goals, or task descriptions here. Octoboss reads this to understand what to work on. -->
+`;
+
+/**
+ * Ensure the octoboss tentacle folder exists with required agent-facing files.
+ * This runs on every startup so the folder is always recognized by the deck system.
+ */
+const ensureOctobossTentacle = (workspaceCwd: string) => {
+  const octobossDir = join(workspaceCwd, ".octogent", "tentacles", "__octoboss__");
+  mkdirSync(octobossDir, { recursive: true });
+
+  const contextPath = join(octobossDir, "CONTEXT.md");
+  if (!existsSync(contextPath)) {
+    writeFileSync(contextPath, OCTOBOSS_CONTEXT_MD, "utf8");
+  }
+
+  const todoPath = join(octobossDir, "todo.md");
+  if (!existsSync(todoPath)) {
+    writeFileSync(todoPath, OCTOBOSS_TODO_MD, "utf8");
+  }
+
+  const briefingPath = join(octobossDir, "BRIEFING.md");
+  if (!existsSync(briefingPath)) {
+    writeFileSync(briefingPath, OCTOBOSS_BRIEFING_MD, "utf8");
+  }
+};
+
 export const ensureProjectScaffold = (
   workspaceCwd: string,
   preferredName?: string,
@@ -264,6 +311,8 @@ export const ensureProjectScaffold = (
   for (const subdirectory of ["tentacles", "worktrees"]) {
     mkdirSync(join(octogentDir, subdirectory), { recursive: true });
   }
+
+  ensureOctobossTentacle(workspaceCwd);
 
   return ensureProjectConfig(workspaceCwd, preferredName, preferredProjectId);
 };

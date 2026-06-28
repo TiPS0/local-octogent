@@ -282,6 +282,45 @@ export const readDeckVaultFile = (
 };
 
 /**
+ * Write (create or overwrite) a vault .md file in a tentacle's directory.
+ * Only .md files are permitted. Returns true on success.
+ */
+export const writeVaultFile = (
+  workspaceCwd: string,
+  tentacleId: string,
+  fileName: string,
+  content: string,
+): { ok: true } | { ok: false; error: string } => {
+  if (tentacleId.includes("..") || tentacleId.includes("/")) {
+    return { ok: false, error: "Invalid tentacle ID" };
+  }
+  if (fileName.includes("..") || fileName.includes("/")) {
+    return { ok: false, error: "Invalid file name" };
+  }
+  if (!fileName.endsWith(".md")) {
+    return { ok: false, error: "Only .md files are supported" };
+  }
+
+  const tentacleDir = join(workspaceCwd, TENTACLES_DIR, tentacleId);
+  if (!existsSync(tentacleDir)) {
+    return { ok: false, error: "Tentacle not found" };
+  }
+
+  // Refuse to overwrite CONTEXT.md via this endpoint — it's managed by the deck API
+  if (fileName === "CONTEXT.md") {
+    return { ok: false, error: "CONTEXT.md cannot be edited via the vault file API" };
+  }
+
+  try {
+    writeFileSync(join(tentacleDir, fileName), content, "utf-8");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Failed to write file" };
+  }
+};
+
+
+/**
  * Toggle a todo checkbox in a tentacle's todo.md by item index.
  */
 export const toggleTodoItem = (

@@ -17,6 +17,9 @@ import {
   type OctopusExpression,
   OctopusGlyph,
 } from "../EmptyOctopus";
+import { OctobossKnowledgePanel } from "./OctobossKnowledgePanel";
+
+const OCTOBOSS_TENTACLE_ID = "__octoboss__";
 
 const OCTOPUS_COLORS = [
   "#ff6b2b",
@@ -312,8 +315,15 @@ export const CanvasTentaclePanel = ({
           </div>
         </div>
 
-        {/* Progress section */}
-        {tentacle && (
+        {/* Knowledge panel — OctoBoss only */}
+        {node.tentacleId === OCTOBOSS_TENTACLE_ID && (
+          <div className="detail-section">
+            <OctobossKnowledgePanel />
+          </div>
+        )}
+
+        {/* Progress section — non-OctoBoss tentacles only */}
+        {tentacle && node.tentacleId !== OCTOBOSS_TENTACLE_ID && (
           <div className="detail-section">
             <div className="detail-section-title">Progress</div>
             {tentacle.todoTotal > 0 && (
@@ -425,8 +435,8 @@ export const CanvasTentaclePanel = ({
           </div>
         )}
 
-        {/* Vault files */}
-        {tentacle && tentacle.vaultFiles.length > 0 && (
+        {/* Vault files — non-OctoBoss tentacles only */}
+        {tentacle && node.tentacleId !== OCTOBOSS_TENTACLE_ID && tentacle.vaultFiles.length > 0 && (
           <div className="detail-section">
             <div className="detail-section-title">Vault Files</div>
             <div className="detail-labels-list">

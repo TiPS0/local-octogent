@@ -336,6 +336,9 @@ export const buildDeckVaultFileUrl = (
   return buildAbsoluteUrl(runtimeBaseUrl, path);
 };
 
+// POST/PUT to the same vault file path to write content
+export const buildDeckVaultFileWriteUrl = buildDeckVaultFileUrl;
+
 export const buildDeckTodoToggleUrl = (
   tentacleId: string,
   runtimeBaseUrl = readRuntimeBaseUrl(),

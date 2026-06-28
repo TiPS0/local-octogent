@@ -1,0 +1,354 @@
+/* ─── OctoBoss Knowledge Ingestion Panel ────────────────────────────────────── */
+
+.ob-panel {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(10, 14, 20, 0.6);
+  overflow: hidden;
+}
+
+/* Header / toggle */
+.ob-panel-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 163, 44, 0.08);
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  color: var(--text-primary, #e8d5b0);
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.ob-panel-header:hover {
+  background: rgba(255, 163, 44, 0.14);
+}
+
+.ob-panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ffa32c;
+}
+
+.ob-panel-subtitle {
+  font-size: 10px;
+  color: rgba(232, 213, 176, 0.5);
+  margin-right: auto;
+}
+
+/* Body */
+.ob-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Tab bar */
+.ob-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ob-tab {
+  flex: 1;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  color: rgba(232, 213, 176, 0.45);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ob-tab:hover {
+  color: rgba(232, 213, 176, 0.8);
+}
+
+.ob-tab--active {
+  color: #ffa32c;
+  border-bottom-color: #ffa32c;
+}
+
+/* Tab content area */
+.ob-tab-content {
+  padding: 0;
+}
+
+/* ─── File Editor ─────────────────────────────────────────────────────────── */
+
+.ob-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ob-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 4px;
+}
+
+.ob-editor-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(232, 213, 176, 0.7);
+}
+
+.ob-editor-filename {
+  font-size: 10px;
+  font-family: "SFMono-Regular", "Consolas", monospace;
+  color: rgba(255, 163, 44, 0.6);
+  background: rgba(255, 163, 44, 0.08);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.ob-editor-hint {
+  margin: 0 12px 6px;
+  font-size: 10px;
+  color: rgba(232, 213, 176, 0.4);
+  line-height: 1.4;
+}
+
+.ob-editor-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  color: rgba(232, 213, 176, 0.5);
+  font-size: 11px;
+}
+
+.ob-editor-textarea {
+  width: 100%;
+  min-height: 140px;
+  max-height: 320px;
+  resize: vertical;
+  background: rgba(0, 0, 0, 0.35);
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #d4c8a8;
+  font-family: "SFMono-Regular", "Consolas", "Menlo", monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  outline: none;
+  transition: background 0.15s;
+}
+
+.ob-editor-textarea:focus {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.ob-editor-textarea::placeholder {
+  color: rgba(232, 213, 176, 0.25);
+}
+
+.ob-editor-footer {
+  padding: 8px 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Save button */
+.ob-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 163, 44, 0.4);
+  background: rgba(255, 163, 44, 0.1);
+  color: #ffa32c;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ob-save-btn:hover:not(:disabled) {
+  background: rgba(255, 163, 44, 0.22);
+  border-color: rgba(255, 163, 44, 0.7);
+}
+
+.ob-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ob-save-btn--saved {
+  border-color: rgba(0, 255, 170, 0.5);
+  background: rgba(0, 255, 170, 0.08);
+  color: #00ffaa;
+}
+
+.ob-save-btn--error {
+  border-color: rgba(255, 80, 80, 0.5);
+  background: rgba(255, 80, 80, 0.08);
+  color: #ff6464;
+}
+
+.ob-save-btn--saving {
+  opacity: 0.7;
+}
+
+/* Spinner */
+.ob-spin {
+  animation: ob-spin-anim 0.8s linear infinite;
+}
+
+@keyframes ob-spin-anim {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─── Files Upload Pane ───────────────────────────────────────────────────── */
+
+.ob-files-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.ob-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border: 2px dashed rgba(255, 163, 44, 0.25);
+  border-radius: 6px;
+  background: rgba(255, 163, 44, 0.04);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+
+.ob-drop-zone:hover,
+.ob-drop-zone:focus-visible {
+  border-color: rgba(255, 163, 44, 0.5);
+  background: rgba(255, 163, 44, 0.09);
+  outline: none;
+}
+
+.ob-drop-zone--active {
+  border-color: #ffa32c;
+  background: rgba(255, 163, 44, 0.15);
+}
+
+.ob-drop-icon {
+  color: rgba(255, 163, 44, 0.5);
+}
+
+.ob-drop-zone--active .ob-drop-icon {
+  color: #ffa32c;
+}
+
+.ob-drop-label {
+  font-size: 11px;
+  color: rgba(232, 213, 176, 0.5);
+}
+
+.ob-drop-zone--active .ob-drop-label {
+  color: #e8d5b0;
+}
+
+/* Upload result list */
+.ob-upload-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ob-upload-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.ob-upload-item--saved {
+  background: rgba(0, 255, 170, 0.06);
+  color: #00ffaa;
+}
+
+.ob-upload-item--error {
+  background: rgba(255, 80, 80, 0.07);
+  color: #ff6464;
+}
+
+.ob-upload-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "SFMono-Regular", "Consolas", monospace;
+}
+
+.ob-upload-status {
+  font-weight: 700;
+}
+
+/* Vault file list */
+.ob-vault-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ob-vault-list-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(232, 213, 176, 0.4);
+}
+
+.ob-vault-list-empty {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: rgba(232, 213, 176, 0.3);
+}
+
+.ob-vault-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ob-vault-list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(232, 213, 176, 0.6);
+  font-family: "SFMono-Regular", "Consolas", monospace;
+  padding: 3px 0;
+}
