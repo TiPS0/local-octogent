@@ -1,3 +1,17 @@
 #!/usr/bin/env node
 
-import "../dist/api/cli.js";
+import { execSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const rootDir = join(__dirname, "..");
+
+// Auto-build if running from source
+if (existsSync(join(rootDir, "scripts", "build-package.mjs"))) {
+  console.log("🛠️  Auto-building octogent...");
+  execSync("pnpm build", { stdio: "inherit", cwd: rootDir });
+}
+
+await import("../dist/api/cli.js");

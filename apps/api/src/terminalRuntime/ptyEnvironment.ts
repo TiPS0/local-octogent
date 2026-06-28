@@ -38,11 +38,24 @@ export const ensureNodePtySpawnHelperExecutable = () => {
       }
 
       const currentMode = statSync(helperPath).mode;
-      if ((currentMode & 0o111) !== 0) {
-        continue;
+      if ((currentMode & 0o111) === 0) {
+        chmodSync(helperPath, currentMode | 0o755);
       }
 
-      chmodSync(helperPath, currentMode | 0o755);
+      if (process.platform === "darwin") {
+        try {
+          const { execSync } = require("node:child_process");
+          execSync(`xattr -d com.apple.quarantine "${helperPath}" 2>/dev/null`);
+        } catch {
+          // Ignore errors if xattr is not present or quarantine is not set
+        }
+        try {
+          const { execSync } = require("node:child_process");
+          execSync(`codesign -s - --force "${helperPath}" 2>/dev/null`);
+        } catch {
+          // Ignore errors if codesign is not available
+        }
+      }
     }
   } catch {
     // Let node-pty throw the actionable error if helper lookup/setup fails.

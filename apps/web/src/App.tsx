@@ -36,6 +36,7 @@ import {
   buildTerminalEventsSocketUrl,
   buildTerminalSnapshotsUrl,
 } from "./runtime/runtimeEndpoints";
+import { Toast, type ToastMessage } from "./components/ui/Toast";
 
 export const App = () => {
   const [terminals, setTerminals] = useState<TerminalView>([]);
@@ -114,6 +115,15 @@ export const App = () => {
     | null
   >(null);
   const [deckEmptyViewMode, setDeckEmptyViewMode] = useState<"idle" | "adding">("idle");
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const addToast = useCallback((type: ToastMessage["type"], message: string) => {
+    setToasts((current) => [...current, { id: crypto.randomUUID(), type, message }]);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((current) => current.filter((t) => t.id !== id));
+  }, []);
 
   const readColumns = useCallback(
     async (signal?: AbortSignal) => {
@@ -419,7 +429,13 @@ export const App = () => {
   );
 
   return (
-    <div className="page console-shell">
+    <div className="page console-shell relative">
+      <div className="pointer-events-none fixed left-1/2 top-4 z-50 flex -translate-x-1/2 flex-col gap-2">
+        {toasts.map((toast) => (
+          <Toast key={toast.id} toast={toast} onClose={removeToast} />
+        ))}
+      </div>
+
       {isRuntimeStatusStripVisible && (
         <RuntimeStatusStrip
           sparklinePoints={sparklinePoints}
@@ -571,7 +587,14 @@ export const App = () => {
                     body: JSON.stringify({ workspaceMode }),
                   },
                 );
-                if (!response.ok) return;
+                if (!response.ok) {
+                  const errorData = await response.json().catch(() => ({}));
+                  const errorMessage = errorData.error || "Failed to start swarm";
+                  addToast("error", errorMessage);
+                  return;
+                }
+                
+                addToast("success", "Swarm started successfully!");
               },
               onOctobossAction: async (action) => {
                 const response = await fetch("/api/terminals", {
