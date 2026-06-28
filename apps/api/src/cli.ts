@@ -4,6 +4,7 @@ import { createServer } from "node:net";
 import { basename, join, resolve } from "node:path";
 
 import {
+  ensureOctobossTentacle,
   ensureOctogentGitignoreEntry,
   ensureProjectScaffold,
   loadProjectConfig,
@@ -77,6 +78,7 @@ const initializeProject = (workspaceCwd: string, preferredName?: string) => {
 const resolveStartupProjectContext = (workspaceCwd: string) => {
   const existingConfig = loadProjectConfig(workspaceCwd);
   if (existingConfig) {
+    ensureOctobossTentacle(workspaceCwd);
     registerProject(workspaceCwd, existingConfig.displayName);
     const projectStateDir = resolveProjectStateDir(workspaceCwd, existingConfig.displayName);
     migrateStateToGlobal(workspaceCwd, projectStateDir);
@@ -574,6 +576,57 @@ const channelSend = async () => {
   }
 };
 
+const swarmTentacle = async () => {
+  const tentacleId = args[1];
+  if (!tentacleId || tentacleId.startsWith("-")) {
+    console.error("Error: tentacleId is required.");
+    process.exit(1);
+  }
+
+  const workspaceMode = parseFlag("--workspace-mode") ?? parseFlag("-w");
+  const agentProvider = parseFlag("--agent-provider");
+  const indicesRaw = parseFlag("--indices");
+  const apiBase = resolveRuntimeApiBase();
+
+  const body: Record<string, unknown> = {};
+  if (workspaceMode) body.workspaceMode = workspaceMode;
+  if (agentProvider) body.agentProvider = agentProvider;
+  if (indicesRaw) {
+    const indices = indicesRaw
+      .split(",")
+      .map((s) => Number.parseInt(s.trim(), 10))
+      .filter((n) => Number.isFinite(n));
+    if (indices.length > 0) body.indices = indices;
+  }
+
+  try {
+    const response = await fetch(
+      `${apiBase}/api/deck/tentacles/${encodeURIComponent(tentacleId)}/swarm`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    const data = (await response.json()) as Record<string, unknown>;
+    if (!response.ok) {
+      console.error(`Error: ${data.error ?? "Failed"}`);
+      process.exit(1);
+    }
+    const workers = (data.workers ?? []) as Array<{ terminalId: string; todoText: string }>;
+    const parentTerminalId = data.parentTerminalId as string | null;
+    console.log(`Swarm started for tentacle "${tentacleId}"`);
+    if (parentTerminalId) {
+      console.log(`  coordinator: ${parentTerminalId}`);
+    }
+    for (const w of workers) {
+      console.log(`  worker: ${w.terminalId}  ${w.todoText}`);
+    }
+  } catch {
+    apiError();
+  }
+};
+
 const channelList = async () => {
   const terminalId = args[2];
   if (!terminalId || terminalId.startsWith("-")) {
@@ -660,6 +713,10 @@ const main = async () => {
     }
   }
 
+  if (command === "swarm") {
+    return swarmTentacle();
+  }
+
   if (command === "channel") {
     if (args[1] === "send") {
       return channelSend();
@@ -690,6 +747,10 @@ const main = async () => {
   octogent terminal stop <id>          Stop a terminal session
   octogent terminal kill <id>          Kill a terminal session or recorded process
   octogent terminal prune              Remove stale, stopped, and exited terminal records
+  octogent swarm <tentacle-id>         Spawn a swarm for a tentacle's todo.md tasks
+    --workspace-mode, -w               shared | worktree (default: worktree)
+    --indices                          Comma-separated todo item indices to run
+    --agent-provider                   Agent provider override
   octogent channel send <id> <msg>     Send a channel message
   octogent channel list <id>           List channel messages`);
   process.exit(1);

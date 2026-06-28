@@ -282,7 +282,7 @@ const OCTOBOSS_BRIEFING_MD = `# Briefing
  * Ensure the octoboss tentacle folder exists with required agent-facing files.
  * This runs on every startup so the folder is always recognized by the deck system.
  */
-const ensureOctobossTentacle = (workspaceCwd: string) => {
+export const ensureOctobossTentacle = (workspaceCwd: string) => {
   const octobossDir = join(workspaceCwd, ".octogent", "tentacles", "__octoboss__");
   mkdirSync(octobossDir, { recursive: true });
 

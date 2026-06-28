@@ -8,7 +8,7 @@ import {
 
 const OCTOBOSS_ID = "__octoboss__";
 
-type KnowledgeTab = "briefing" | "prompt" | "files";
+type KnowledgeTab = "briefing" | "prompt" | "todo" | "files";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -306,7 +306,7 @@ export const OctobossKnowledgePanel = ({
       {isExpanded && (
         <div className="ob-panel-body">
           <div className="ob-tabs" role="tablist">
-            {(["briefing", "prompt", "files"] as KnowledgeTab[]).map((tab) => (
+            {(["briefing", "prompt", "todo", "files"] as KnowledgeTab[]).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -335,6 +335,14 @@ export const OctobossKnowledgePanel = ({
                 label="Task Prompt"
                 placeholder="Give Octoboss a specific instruction or task to execute…"
                 hint="Saved to PROMPT.md — use this for a direct task instruction."
+              />
+            )}
+            {activeTab === "todo" && (
+              <FileEditor
+                fileName="todo.md"
+                label="Task Checklist"
+                placeholder="List tasks grouped by department here..."
+                hint="Saved to todo.md — Octoboss reads this to spawn department swarms."
               />
             )}
             {activeTab === "files" && <FilesUploadPane />}

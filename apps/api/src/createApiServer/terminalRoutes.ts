@@ -27,7 +27,8 @@ const buildTentacleInitialPrompt = (
   projectStateDir: string,
   tentacleId: string,
 ): Promise<string | undefined> => {
-  const tentacle = readDeckTentacles(workspaceCwd, projectStateDir).find(
+  const deckTentacles = readDeckTentacles(workspaceCwd, projectStateDir);
+  const tentacle = deckTentacles.find(
     (entry) => entry.tentacleId === tentacleId,
   );
   if (!tentacle) {
@@ -35,10 +36,21 @@ const buildTentacleInitialPrompt = (
   }
 
   const tentacleFolderPath = join(".octogent", "tentacles", tentacleId);
-  return resolvePrompt(promptsDir, "tentacle-context-init", {
+  const promptTemplateName = tentacleId === "__octoboss__" ? "octoboss-init" : "tentacle-context-init";
+
+  const tentacleRoster = deckTentacles
+    .filter((t) => t.tentacleId !== "__octoboss__")
+    .map(
+      (t) =>
+        `- **${t.displayName}** (\`${t.tentacleId}\`): ${t.description || "(no description)"}`,
+    )
+    .join("\n");
+
+  return resolvePrompt(promptsDir, promptTemplateName, {
     tentacleName: tentacle.displayName,
     tentacleId,
     tentacleContextPath: tentacleFolderPath,
+    tentacleRoster,
   });
 };
 

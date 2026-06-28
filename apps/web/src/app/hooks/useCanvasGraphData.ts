@@ -256,6 +256,7 @@ export const useCanvasGraphData = ({
   // terminals are excluded from the graph).
   const allTentacleIds: string[] = [];
   for (const dt of deckTentacles) {
+    if (dt.tentacleId === OCTOBOSS_ID) continue;
     allTentacleIds.push(dt.tentacleId);
     seenTentacleIds.add(dt.tentacleId);
   }

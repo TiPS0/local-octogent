@@ -4,7 +4,14 @@ OctoBoss is the meta-agent orchestrator. Instead of writing code directly, it an
 
 To orchestrate effectively, OctoBoss needs context. The **Knowledge Panel** in the OctoBoss canvas provides three tabs to feed it the necessary data: **Briefing**, **Prompt**, and **Files**. 
 
-All data provided through these tabs is persisted in the OctoBoss tentacle folder (`.octogent/tentacles/octoboss/`) and is read by OctoBoss when it plans tasks.
+All data provided through these tabs is persisted in the OctoBoss tentacle folder (`.octogent/tentacles/__octoboss__/`) and is read by OctoBoss when it plans tasks.
+
+> [!IMPORTANT]
+> **AI Generation Rules:** If an AI assistant (like Claude) is asked to generate data based on this file, it MUST generate exactly four markdown artifacts:
+> 1. `Briefing.md` - Overall context.
+> 2. `Prompt.md` - Delegation instructions (must follow the strict agentic pattern below).
+> 3. `Task List.md` - A human-readable summary of the work.
+> 4. `todo.md` - The actual system checklist grouped by department tentacles.
 
 ## 1. Briefing (`BRIEFING.md`)
 
@@ -36,19 +43,35 @@ We are implementing a JWT-based login system for the new web app.
 The **Prompt** is your direct, immediate instruction to OctoBoss. If the Briefing is the long-term context, the Prompt is the trigger for the current session.
 
 Use the Prompt tab for:
-- Specific commands for OctoBoss to execute right now.
-- Asking OctoBoss to review the Briefing and generate a `todo.md` plan.
+- Explicit commands for OctoBoss to act as a manager.
+- Ensuring OctoBoss delegates tasks instead of doing them itself.
 - Providing mid-flight course corrections if the swarm gets stuck.
 
-### Sample Pattern
+### Sample Pattern (Agentic Supervisor)
+
+To force OctoBoss to behave as a supervisor (and not write code itself), use this exact pattern:
 
 ```md
-Read the new Authentication requirements in the Briefing.
-Break the implementation down into small, actionable steps and add them to the `todo.md` checklist so we can spawn a swarm.
-Make sure to include a task for writing unit tests.
+I have uploaded a `todo.md` file into your vault. Your job is to act as the Engineering Manager. 
+You must NOT write the code for these tasks yourself. 
+Instead, decompose these tasks, assign them to the appropriate department tentacles (e.g., core-domain, api-server, web-ui), and spawn swarms to complete them. 
+Monitor their progress and run `verify.js` only when they all report completion.
 ```
 
-## 3. Files (Vault Files)
+## 3. Todo List (`todo.md`)
+
+The **Todo** tab holds the actual checklist of work. For OctoBoss to delegate effectively, this checklist should group tasks by the department that owns them, rather than just listing sequential chronological steps.
+
+### Sample Pattern (Department Grouping)
+
+```md
+- [ ] **core-domain**: Create `core/types.js` with `SystemPing` typedef.
+- [ ] **api-server**: Implement `api/server.js` using the core types.
+- [ ] **web-ui**: Create `ui/index.html` to fetch and render the ping.
+- [ ] **Boss/QA**: Create and run `verify.js` to test the integrated system.
+```
+
+## 4. Files (Vault Files)
 
 The **Files** tab allows you to drag-and-drop or upload multiple Markdown (`.md`) or text (`.txt`) files directly into OctoBoss's vault. 
 
@@ -71,5 +94,6 @@ OctoBoss will see these files in its vault and can read them when devising its e
 
 1. **Upload** any necessary reference documents via the **Files** tab.
 2. **Write** your project goals and constraints in the **Briefing** tab.
-3. **Give an instruction** in the **Prompt** tab telling OctoBoss what to do with that information.
-4. **Run** OctoBoss (or start a swarm) to let it execute the plan based on the data you provided.
+3. **List** your tasks grouped by department in the **Todo** tab.
+4. **Give an instruction** in the **Prompt** tab telling OctoBoss to manage and delegate.
+5. **Run** OctoBoss (or start a swarm) to let it execute the plan based on the data you provided.
