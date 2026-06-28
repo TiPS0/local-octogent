@@ -80,6 +80,26 @@ export const createSessionRuntime = ({
     ? Math.max(1, Math.floor(maxConcurrentSessions))
     : TERMINAL_MAX_CONCURRENT_SESSIONS;
 
+  const safePtyWrite = (session: TerminalSession, data: string) => {
+    try {
+      if (!session.isClosed) {
+        session.pty.write(data);
+      }
+    } catch (error) {
+      // Ignore EIO if PTY already closed
+    }
+  };
+
+  const safePtyResize = (session: TerminalSession, cols: number, rows: number) => {
+    try {
+      if (!session.isClosed) {
+        session.pty.resize(cols, rows);
+      }
+    } catch (error) {
+      // Ignore EIO if PTY already closed
+    }
+  };
+
   const getShellLaunch = () => {
     if (process.platform === "win32") {
       return {
@@ -477,7 +497,7 @@ export const createSessionRuntime = ({
     const bootstrapCommand =
       TERMINAL_BOOTSTRAP_COMMANDS[provider] ?? TERMINAL_BOOTSTRAP_COMMANDS[DEFAULT_AGENT_PROVIDER];
     appendDebugLog(session, `bootstrap session=${sessionId} command=${bootstrapCommand}`);
-    session.pty.write(`${bootstrapCommand}\r`);
+    safePtyWrite(session, `${bootstrapCommand}\r`);
 
     // Schedule initial prompt injection after Claude Code has had time to boot.
     if (session.initialPrompt && !session.isInitialPromptSent) {
@@ -491,13 +511,13 @@ export const createSessionRuntime = ({
           session.isInitialPromptSent = true;
           appendDebugLog(session, `initial-prompt session=${sessionId}`);
           const prompt = session.initialPrompt ?? "";
-          session.pty.write(`${BRACKETED_PASTE_START}${prompt}${BRACKETED_PASTE_END}`);
+          safePtyWrite(session, `${BRACKETED_PASTE_START}${prompt}${BRACKETED_PASTE_END}`);
           schedulePromptTimer(
             session,
             sessionId,
             () => {
               appendDebugLog(session, `initial-prompt-submit session=${sessionId}`);
-              session.pty.write("\r");
+              safePtyWrite(session, "\r");
             },
             INITIAL_PROMPT_SUBMIT_DELAY_MS,
           );
@@ -517,7 +537,7 @@ export const createSessionRuntime = ({
           session.isInitialInputDraftSent = true;
           appendDebugLog(session, `initial-input-draft session=${sessionId}`);
           const draft = session.initialInputDraft ?? "";
-          session.pty.write(`${BRACKETED_PASTE_START}${draft}${BRACKETED_PASTE_END}`);
+          safePtyWrite(session, `${BRACKETED_PASTE_START}${draft}${BRACKETED_PASTE_END}`);
         },
         INITIAL_PROMPT_DELAY_MS,
       );
@@ -680,7 +700,10 @@ export const createSessionRuntime = ({
           type: "output",
           data: `\r\n[terminal failed to start: ${toErrorMessage(error)}]\r\n`,
         });
-        websocket.close();
+        onSessionEnd?.(sessionId, {
+          reason: "session_close",
+          endedAt: new Date().toISOString(),
+        });
         return;
       }
 
@@ -711,7 +734,7 @@ export const createSessionRuntime = ({
               session,
               `ws-input session=${sessionId} data=${JSON.stringify(payload.data)}`,
             );
-            session.pty.write(payload.data);
+            safePtyWrite(session, payload.data);
             if (/[\r\n]/.test(payload.data)) {
               emitStateIfChanged(
                 session,
@@ -735,10 +758,10 @@ export const createSessionRuntime = ({
 
             session.cols = nextCols;
             session.rows = nextRows;
-            session.pty.resize(nextCols, nextRows);
+            safePtyResize(session, nextCols, nextRows);
           }
         } catch {
-          session.pty.write(text);
+          safePtyWrite(session, text);
         }
       });
 
@@ -824,7 +847,7 @@ export const createSessionRuntime = ({
       return false;
     }
 
-    session.pty.write(data);
+    safePtyWrite(session, data);
     if (/[\r\n]/.test(data)) {
       emitStateIfChanged(session, terminalId, session.stateTracker.observeSubmit(Date.now()));
     }
@@ -845,7 +868,7 @@ export const createSessionRuntime = ({
 
     session.cols = nextCols;
     session.rows = nextRows;
-    session.pty.resize(nextCols, nextRows);
+    safePtyResize(session, nextCols, nextRows);
     return true;
   };
 
